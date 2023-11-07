@@ -31,7 +31,7 @@ def diff3(tau,N,T,tau_T,f,tau_D1,tau_D2):
     return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
 
 initial_params = {
-    "diff2minus1": {'N': 4.0, 'T': 0.38, 'tau_T': 0.0088,'tau_D': 0.2},
+    "diff2minus1": {'N': 1.50, 'T': 0.26, 'tau_T': 0.0088,'tau_D': 3.2},
     "diff3minus1": {'N': 4.0, 'T': 0.38, 'tau_T': 0.0088, 'f': 0.4,'tau_D1': 0.18, 'tau_D2': 0.3}
   #  "diff3minus1": {'N': N, 'T': T, 'tau_T': tau_T, 'f': 0.4,'tau_D1': 0.94*tau_D, 'tau_D2': 0.3}
 }
@@ -282,6 +282,6 @@ update_graph()
 
 
 # Start the tkinter main loop
-root.mainloop()
+root.quit()
 
 
