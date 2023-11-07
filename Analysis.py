@@ -46,15 +46,18 @@ fig, ax = plt.subplots()
 #plt.plot(x,y)
 # plot all the data in one plot
 for FCSdata in data_list:
-    plt.semilogx(FCSdata['time'].astype(float), FCSdata['corr'].astype(float),marker='o')
-i =2    # i = 1 for single component fit otherwise multiple component fit
+    x_data = FCSdata['time'].astype(float)
+    y_data = FCSdata['corr'].astype(float)
+    plt.semilogx(x_data, y_data,marker='o')
+    #plt.semilogx(FCSdata['time'].astype(float), FCSdata['corr'].astype(float),marker='o')
+i = 2    # i = 1 for single component fit otherwise multiple component fit
 if i==1:
-    init_vals = [0.5,0.38,0.0009,.12] #diff2
+    init_vals = [0.5,0.38,0.0009,.12] # initial guess diff2
     def func(tau,N,T,tau_T,tau_D):
         Rsqd = 25
         return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*((1 + tau/tau_D)**(-1))*(1 + tau/(Rsqd*tau_D))**(-0.5)
 else:
-    init_vals = [5,0.35,0.002,0.99,0.28,1]
+    init_vals = [5,0.35,0.002,0.99,0.28,1] # initial guess
     def func(tau,N,T,tau_T,f,tau_D1,tau_D2):
         Rsqd = 25
         return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
