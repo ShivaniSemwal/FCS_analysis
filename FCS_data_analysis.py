@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a script for analysing FCS data in .ASC and .SIN format.
+Single and multiple dataset can be loaded using Load Data.
+Data can be viewed by plotting it using Plot Graphs.
+For data analysis, select fitting model, set initial guess parameters and curve fit.
+Save results to a single file using Save file.
+
+"""
+
 import tkinter as tk
 from tkinter import filedialog
 import matplotlib.pyplot as plt
@@ -18,11 +30,17 @@ class FCSFitting_app:
         self.load_button.grid(row=0, column=0, columnspan=2, pady=10)
         
         
-        self.load_button = tk.Button(root, text="update graph", command=self.update_graph)
-        self.load_button.grid(row=0, column=4, columnspan=4, pady=10)
+        self.load_button = tk.Button(root, text="curve fit", command=self.update_graph)
+        self.load_button.grid(row=0, column=5, columnspan=7, pady=10)
         
         self.load_button = tk.Button(root, text="save file", command=self.save)
         self.load_button.grid(row=10, column=1, columnspan=1, pady=10)
+        
+        self.load_button = tk.Button(root, text="plot graph", command=self.plot_graph)
+        self.load_button.grid(row=0, column=3, columnspan=1, pady=10)
+        
+        self.load_button = tk.Button(root, text="clear loaded data", command=self.clear_loaded_data)
+        self.load_button.grid(row=10, column=3, columnspan=1, pady=10)
 
 #        self.text_widget = tk.Text(root, height=10, width=50)
 #        self.text_widget.pack(pady=10)
@@ -209,7 +227,7 @@ class FCSFitting_app:
         if self.model_var.get() == "Single Component Fitting":  
             col_name = np.array(['conc', 'avg_countrate (KHz)', 'N','T','tau_T','tau_D','errN','errT','errtau_T','errtau_D'])
         if self.model_var.get() == "Double Component Fitting":
-            col_name = np.array(['conc', 'avg_countrate (KHz)', 'N','T','tau_T','f','tau_D1','tau_D2','errN','errT','errtau_T','errf','errtau_D1','errtau_D2'])
+            col_name = np.array(['conc', 'total_countrate (KHz)', 'N','T','tau_T','f','tau_D1','tau_D2','errN','errT','errtau_T','errf','errtau_D1','errtau_D2'])
         #print('self.best',self.best_val_list)
         self.mat = np.array(self.best_val_list, dtype=float).reshape(self.ind+1, self.size)
         self.errmat = np.array(self.error, dtype=float).reshape(self.ind+1, self.size)
@@ -411,7 +429,21 @@ class FCSFitting_app:
                 self.error.append(error)
                 return best_vals
         
-       
+    def plot_graph(self):
+        for index, self.FCSdata in enumerate(self.data_list):   
+            x_data = self.FCSdata['time'].astype(float)
+            y_data = self.FCSdata['corr1'].astype(float)
+    #ToDo: remove file location 'D/' from label in the plot
+            s = self.start_end_point[index][0]
+            #print("S:", s)
+            e = self.start_end_point[index][1]
+            print("index:", index)
+            plt.semilogx(x_data[s:e], y_data[s:e], marker='o',label = self.file_paths[index]) 
+            plt.legend(loc="upper right")
+            plt.show()
+        self.clear_loaded_data()     
+        
+        
     def update_graph(self):
         for index, self.FCSdata in enumerate(self.data_list):   
             x_data = self.FCSdata['time'].astype(float)
@@ -472,7 +504,20 @@ class FCSFitting_app:
             N,T,tau_T,f,tau_D1,tau_D2 = params
         # Define the curve model based on the parameters
             return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5)) 
-                 
+    
+    def clear_loaded_data(self):
+        self.data_list = []
+        self.countrate_list = []
+        self.file = []
+        self.start_end_point = []
+        self.best_val_list = [] 
+        self.error = []
+        self.data = None
+        self.size = None
+        self.mat = None
+        self.errmat = None
+        self.ind = None
+             
          
     def load_data(self):       
         self.file_paths = filedialog.askopenfilenames(
@@ -484,14 +529,15 @@ class FCSFitting_app:
         for file_path in self.file_paths:
             if file_path.endswith(".ASC"):
         # Execute the following command for .asc files
-                #print(f"Executing command for {file_path}")   
-                df = pd.read_fwf(file_path, skiprows=28)
+                #print(f"Executing command for {file_path}")  
+                #df = pd.read_csv(file_path, encoding='unicode_escape')
+                df = pd.read_fwf(file_path, skiprows=28,encoding='unicode_escape')
                 sz = len(df)
                 df.columns = ['a','b','c','d','e']
                 df = df.drop(['d','e'], axis = 1)
                 idx1 = df.index[df['a'].str.contains('Corr') == True]
                 idx2 = df.index[df['a'].str.contains('Count') == True]
-                Correlation =df.iloc[ idx1[0]+1: idx2[0]-1].reset_index(drop=True)
+                Correlation =df.iloc[ 0: idx2[0]-1].reset_index(drop=True)
                 countrate = df.iloc[idx2[0]+1 : sz-2].reset_index(drop=True)
                 FCSdata= pd.concat([Correlation,countrate], axis = 1)
                 FCSdata.columns = ['time','corr1','corr2','countrate','intensity1','intensity2']              
@@ -507,11 +553,11 @@ class FCSFitting_app:
                 #print("avg_intensity:", self.countrate_list)
                 #a =[35,450]  
             #b = 450
-                self.start_end_point.append([20,450])
+                self.start_end_point.append([0,500]) # set start and end point of the dataset to be analysed;
                 #print("start_end_point:", self.start_end_point)
             else:
                 print(f"Executing command for {file_path}")
-                df = pd.read_fwf(file_path, skiprows=16)
+                df = pd.read_fwf(file_path, skiprows=16,encoding='unicode_escape')
                 sz = len(df)
                 df.columns = ['a','b','c']
                 idx1 = df.index[df['a'].str.contains('Corr') == True]
@@ -525,7 +571,7 @@ class FCSFitting_app:
                 dk = pd.read_fwf(file_path)
                 dk.columns = ['a','b']
                 idx_1 = dk.index[dk['a'].str.contains('Trace') == True]
-                skip_row = idx_1[0]+1
+                skip_row = idx_1[0]+5
                 dk = pd.read_fwf(file_path, skiprows=skip_row)
                 dk.columns = ['a']
                 idx_2 = dk.index[dk['a'].str.contains('Histogram') == True]
@@ -536,7 +582,7 @@ class FCSFitting_app:
                 avg_intensity = dk['detector1'].mean()/1000 + dk['detector2'].mean()/1000  #KHz
                 self.countrate_list.append(avg_intensity)
                 #a = [85,450]
-                self.start_end_point.append([85,450])
+                self.start_end_point.append([85,450])  # set start and end point of the dataset to be analysed;
             
 
 if __name__ == "__main__":
