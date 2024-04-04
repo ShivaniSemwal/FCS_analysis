@@ -533,7 +533,7 @@ class FCSFitting_app:
         # Execute the following command for .asc files
                 #print(f"Executing command for {file_path}")  
                 #df = pd.read_csv(file_path, encoding='unicode_escape')
-                df = pd.read_fwf(file_path, skiprows=30,encoding='unicode_escape')
+                df = pd.read_fwf(file_path, skiprows=28,encoding='unicode_escape')
                 sz = len(df)
                 df.columns = ['a','b','c','d','e']
                 df = df.drop(['d','e'], axis = 1)
