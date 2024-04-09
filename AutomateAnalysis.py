@@ -21,32 +21,30 @@ root.withdraw()
 # Initialize an empty list to store selected file paths
 i = 1
 
+if i == 1:
+    file_paths = []
+    while True:
+        file_path = filedialog.askopenfilename(
+                title="Select a File",
+                filetypes=[("Text files", "*.asc")],
+                initialdir="/path/to/your/folder"  # Optional: specify a starting directory
+                )
+    
+        if not file_path:
+            break  # User canceled the selection
+        else:
+            file_paths.append(file_path)
 
+# Check if files were selected
+    if file_paths:
+        print("Selected files:")
+        for file_path in file_paths:
+            print(file_path)
+    else:
+        print("No files selected.")
 
-#if i == 1:
-#    file_paths = []
-#    while True:
-#        file_path = filedialog.askopenfilename(
-#                title="Select a File",
-#                filetypes=[("Text files", "*.asc")],
-#                initialdir="/path/to/your/folder"  # Optional: specify a starting directory
-#                )
-#    
-#        if not file_path:
-#            break  # User canceled the selection
-#        else:
-#            file_paths.append(file_path)
-#
-## Check if files were selected
-#    if file_paths:
-#        print("Selected files:")
-#        for file_path in file_paths:
-#            print(file_path)
-#    else:
-#        print("No files selected.")
-#
-#else:
-#    file_paths = filedialog.askopenfilenames(filetypes=[("ASC Files", "*.asc")])
+else:
+    file_paths = filedialog.askopenfilenames(filetypes=[("ASC Files", "*.asc")])
         
 def diff2(tau,N,T,tau_T,tau_D):
     Rsqd = 25
@@ -61,23 +59,8 @@ initial_params = {
     "diff3minus1": {'N': 5.0, 'T': 0.35, 'tau_T': 0.002, 'f': 0.99,'tau_D1': 0.28, 'tau_D2': 1}
 }
 
-#file_path = filedialog.askopenfilename(filetypes=[("ASC Files", "*.asc")])
-"read data"
-#df = pd.read_fwf(filelist[3], skiprows=28)
-#df = pd.read_fwf(file_path, skiprows=28)
-#sz = len(df)
-#df.columns = ['a','b','c','d','e']
-#df = df.drop(['d','e'], axis = 1)
-#idx1 = df.index[df['a'].str.contains('Corr') == True]
-#idx2 = df.index[df['a'].str.contains('Count') == True]
-#Correlation = df.iloc[ idx1[0]+1: idx2[0]-1].reset_index(drop=True)
-#countrate = df.iloc[idx2[0]+1 : sz-2].reset_index(drop=True)
-#FCSdata = pd.concat([Correlation,countrate], axis = 1)
-#FCSdata.columns = ['time','corr','corr2','countrate','intensity1','intensity2']
-#FCSdata = FCSdata.dropna()
-#x_data = FCSdata['time'].astype(float)
-#y_data = FCSdata['corr'].astype(float)
-
+    
+    
 # You can now use the selected file paths as needed.
 def update_graph():
     selected_model = model_var.get()
@@ -182,7 +165,7 @@ canvas.get_tk_widget().pack()
 update_graph()
 
 # Start the tkinter main loop
-root.mainloop()
+root.quit()
 #fig, ax = plt.subplots()
 #for file in file_paths:
 #

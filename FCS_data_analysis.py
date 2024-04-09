@@ -2,12 +2,17 @@
 """
 Spyder Editor
 
-This is a script for analysing FCS data in .ASC and .SIN format.
+This is a script for analysing FCS data saved in .ASC and .SIN format.
 Single and multiple dataset can be loaded using Load Data.
 Data can be viewed by plotting it using Plot Graphs.
 For data analysis, select fitting model, set initial guess parameters and curve fit.
 Save results to a single file using Save file.
 
+Important: 1. The script can hold/fix one fitting parameter at a time
+           2. To hold/fix multiple parameters together, the script has been updated to
+           hold only tau_T and tau_D1 together.
+    ***if needed to hold some other parameters together, 
+    script can be modified accordingly***        
 """
 
 import tkinter as tk
@@ -326,7 +331,25 @@ class FCSFitting_app:
                 return best_vals
             
         elif model == "Double Component Fitting":
-            if fix_N or fix_T or fix_tau_T or fix_f or fix_tau_D1 or fix_tau_D2 :
+             if fix_tau_T and fix_tau_D1:
+                def func(tau,N,T,f,tau_D2):          
+                        Rsqd = 25
+                        tau_T = float(self.entry_c.get())
+                        tau_D1 = float(self.entry_f.get())
+                        return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
+                best_vals, covariance = curve_fit(func, x, y, p0=[initial_params[0],initial_params[1],initial_params[3],initial_params[5]])
+                best_vals = np.insert(best_vals, [2,4],[float(self.entry_c.get()),float(self.entry_f.get())])
+                errtau_T = 0
+                errtau_D1 = 0
+                errN,errT,errf,errtau_D2 = np.sqrt(np.diag(covariance))
+                error =  [errN, errT,errtau_T,errf,errtau_D1,errtau_D2]
+                print('best val', best_vals) 
+                print('error',error ) 
+                self.best_val_list.append(best_vals) 
+                self.error.append(error)
+                return best_vals
+            
+             if fix_N or fix_T or fix_tau_T or fix_f or fix_tau_D1 or fix_tau_D2 :
                 print('hold param:')
                 if fix_N:
                     def func(tau,T,tau_T,f,tau_D1,tau_D2):          
@@ -334,7 +357,7 @@ class FCSFitting_app:
                         N = float(self.entry_a.get())
                         #del initial_params[0]
                         return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
-                    best_vals, covariance = curve_fit(func, x, y, p0=initial_params[1:6])
+                    best_vals, covariance = curve_fit(func, x, y, p0= initial_params[1:6])
                     best_vals = np.insert(best_vals, 0,float(self.entry_a.get()))
                     errN = 0
                     errT,errtau_T,errf,errtau_D1,errtau_D2 = np.sqrt(np.diag(covariance))
@@ -366,7 +389,7 @@ class FCSFitting_app:
                         Rsqd = 25
                         tau_T = float(self.entry_c.get())
                         return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
-                    best_vals, covariance = curve_fit(func, x, y, p0=[initial_params[0],initial_params[1],initial_params[3],initial_params[4],initial_params[5]])
+                    best_vals, covariance = curve_fit(func, x, y, p0=[initial_params[0],initial_params[1], initial_params[3], initial_params[4],initial_params[5]])
                     best_vals = np.insert(best_vals, 2,float(self.entry_c.get()))
                     errtau_T = 0
                     errN,errT,errf,errtau_D1,errtau_D2 = np.sqrt(np.diag(covariance))
@@ -417,7 +440,8 @@ class FCSFitting_app:
                     self.best_val_list.append(best_vals) 
                     self.error.append(error)
                     return best_vals
-            else:                       
+                
+             else:                       
                 def func(tau,N,T,tau_T,f,tau_D1,tau_D2):
                     Rsqd = 25
                     return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
@@ -441,6 +465,8 @@ class FCSFitting_app:
             plt.semilogx(x_data[s:e], y_data[s:e], marker='o',label = self.file_paths[index]) 
             plt.legend(loc="upper right")
             plt.show()
+        plt.xlabel('T (s)', fontsize=16)
+        plt.ylabel('g(T)', fontsize=16)    
         self.clear_loaded_data()     
         
         
@@ -582,7 +608,7 @@ class FCSFitting_app:
                 avg_intensity = dk['detector1'].mean()/1000 + dk['detector2'].mean()/1000  #KHz
                 self.countrate_list.append(avg_intensity)
                 #a = [85,450]
-                self.start_end_point.append([85,450])  # set start and end point of the dataset to be analysed;
+                self.start_end_point.append([65,450])  # set start and end point of the dataset to be analysed;
             
 
 if __name__ == "__main__":
