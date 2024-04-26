@@ -12,7 +12,7 @@ Important: 1. The script can hold/fix one fitting parameter at a time
            2. To hold/fix multiple parameters together, the script has been updated to
            hold only tau_T and tau_D1 together.
     ***if needed to hold some other parameters together, 
-    script can be modified accordingly***        
+    script can be modified accordingly***  
 """
 
 import tkinter as tk
@@ -55,6 +55,7 @@ class FCSFitting_app:
         self.file = []
         self.start_end_point = []
         self.best_val_list = [] 
+        self.MaxN = [] 
         self.error = []
         self.data = 0
         self.size = 0
@@ -331,25 +332,7 @@ class FCSFitting_app:
                 return best_vals
             
         elif model == "Double Component Fitting":
-             if fix_tau_T and fix_tau_D1:
-                def func(tau,N,T,f,tau_D2):          
-                        Rsqd = 25
-                        tau_T = float(self.entry_c.get())
-                        tau_D1 = float(self.entry_f.get())
-                        return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
-                best_vals, covariance = curve_fit(func, x, y, p0=[initial_params[0],initial_params[1],initial_params[3],initial_params[5]])
-                best_vals = np.insert(best_vals, [2,4],[float(self.entry_c.get()),float(self.entry_f.get())])
-                errtau_T = 0
-                errtau_D1 = 0
-                errN,errT,errf,errtau_D2 = np.sqrt(np.diag(covariance))
-                error =  [errN, errT,errtau_T,errf,errtau_D1,errtau_D2]
-                print('best val', best_vals) 
-                print('error',error ) 
-                self.best_val_list.append(best_vals) 
-                self.error.append(error)
-                return best_vals
-            
-             if fix_N or fix_T or fix_tau_T or fix_f or fix_tau_D1 or fix_tau_D2 :
+            if fix_N or fix_T or fix_tau_T or fix_f or fix_tau_D1 or fix_tau_D2 :
                 print('hold param:')
                 if fix_N:
                     def func(tau,T,tau_T,f,tau_D1,tau_D2):          
@@ -357,7 +340,7 @@ class FCSFitting_app:
                         N = float(self.entry_a.get())
                         #del initial_params[0]
                         return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
-                    best_vals, covariance = curve_fit(func, x, y, p0= initial_params[1:6])
+                    best_vals, covariance = curve_fit(func, x, y, p0=initial_params[1:6])
                     best_vals = np.insert(best_vals, 0,float(self.entry_a.get()))
                     errN = 0
                     errT,errtau_T,errf,errtau_D1,errtau_D2 = np.sqrt(np.diag(covariance))
@@ -389,7 +372,7 @@ class FCSFitting_app:
                         Rsqd = 25
                         tau_T = float(self.entry_c.get())
                         return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
-                    best_vals, covariance = curve_fit(func, x, y, p0=[initial_params[0],initial_params[1], initial_params[3], initial_params[4],initial_params[5]])
+                    best_vals, covariance = curve_fit(func, x, y, p0=[initial_params[0],initial_params[1],initial_params[3],initial_params[4],initial_params[5]])
                     best_vals = np.insert(best_vals, 2,float(self.entry_c.get()))
                     errtau_T = 0
                     errN,errT,errf,errtau_D1,errtau_D2 = np.sqrt(np.diag(covariance))
@@ -440,8 +423,7 @@ class FCSFitting_app:
                     self.best_val_list.append(best_vals) 
                     self.error.append(error)
                     return best_vals
-                
-             else:                       
+            else:                       
                 def func(tau,N,T,tau_T,f,tau_D1,tau_D2):
                     Rsqd = 25
                     return (1 + (T/(1-T))*np.exp(-tau/tau_T))*(1/N)*(f*((1 + tau/tau_D1)**(-1))*(1 + tau/(Rsqd*tau_D1))**(-0.5)+(1-f)*((1 + tau/tau_D2)**(-1))*(1 + tau/(Rsqd*tau_D2))**(-0.5))
@@ -457,16 +439,18 @@ class FCSFitting_app:
         for index, self.FCSdata in enumerate(self.data_list):   
             x_data = self.FCSdata['time'].astype(float)
             y_data = self.FCSdata['corr1'].astype(float)
+            MaxN = self.MaxN
     #ToDo: remove file location 'D/' from label in the plot
             s = self.start_end_point[index][0]
             #print("S:", s)
             e = self.start_end_point[index][1]
-            print("index:", index)
-            plt.semilogx(x_data[s:e], y_data[s:e], marker='o',label = self.file_paths[index]) 
+           # print("index:", index)        
+   #plot Normalize data, if you don't want to Normalize then remove '/MaxN[index]' from the line below
+            plt.semilogx(x_data[s:e], y_data[s:e]/MaxN[index], marker='o',label = self.file_paths[index]) 
             plt.legend(loc="upper right")
+            plt.xlabel('T (s)', fontsize=16)
+            plt.ylabel('g(T)', fontsize=16)
             plt.show()
-        plt.xlabel('T (s)', fontsize=16)
-        plt.ylabel('g(T)', fontsize=16)    
         self.clear_loaded_data()     
         
         
@@ -537,6 +521,7 @@ class FCSFitting_app:
         self.file = []
         self.start_end_point = []
         self.best_val_list = [] 
+        self.MaxN = [] 
         self.error = []
         self.data = None
         self.size = None
@@ -573,13 +558,17 @@ class FCSFitting_app:
                 self.data_list.append(self.FCSdata)
                # print("Data List:", self.data_list)
                 self.file.append(file_path)
+                Corrdata= FCSdata['corr1']
+                corr = Corrdata[:20]  #adding first 20 points to the 'corr' list
+                avg = sum(corr)/len(corr) # averaging first 20 data points or modify it
+                self.MaxN.append(avg) 
                 #print("file_path:", self.file)
                 avg_intensity = FCSdata['intensity1'].mean() + FCSdata['intensity2'].mean()  #KHz
                 self.countrate_list.append(avg_intensity)
                 #print("avg_intensity:", self.countrate_list)
                 #a =[35,450]  
             #b = 450
-                self.start_end_point.append([0,500]) # set start and end point of the dataset to be analysed;
+                self.start_end_point.append([0,500])
                 #print("start_end_point:", self.start_end_point)
             else:
                 print(f"Executing command for {file_path}")
@@ -607,8 +596,11 @@ class FCSFitting_app:
                 dk[['col1', 'detector1', 'detector2']] = pd.DataFrame(dk['a'].tolist(), dtype=float)
                 avg_intensity = dk['detector1'].mean()/1000 + dk['detector2'].mean()/1000  #KHz
                 self.countrate_list.append(avg_intensity)
+                Corrdata= FCSdata['corr1']
+                corr = Corrdata[55:75]  #adding first 20 points to the 'corr' list
+                avg = sum(corr)/len(corr) # averaging first 20 data points or modify it
                 #a = [85,450]
-                self.start_end_point.append([65,450])  # set start and end point of the dataset to be analysed;
+                self.start_end_point.append([55,450])
             
 
 if __name__ == "__main__":
